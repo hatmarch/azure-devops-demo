@@ -1,0 +1,66 @@
+= Azure DevOps demo: Setup =
+:experimental:
+:imagesdir: docs/images
+:toc:
+:toclevels: 4
+
+== Cloning This Repo ==
+
+This repo has submodules.  When cloning, be sure to use the following command to also pull down any linked submodules:
+----
+git clone --recurse-submodules https://github.com/hatmarch/azure-devops-demo
+----
+
+=== Setup Prerequisites ===
+
+[IMPORTANT]
+====
+To limit the amount of incompatibility in setting up the demo, all the commands that are listed are expected to be run in an appropriately setup container.  You will find this as part of the instructions below and it's important not to skip this step
+
+This demo also supports the link:https://code.visualstudio.com/docs/remote/containers[VS Code Remote Development (Containers)] as can be seen in the .devcontainer directory.  If you use the terminal in VSCode and run this repo in a container, then you don't need to follow the commands to run docker in the shell as your terminal will already be running in a container that has all the necessary runtime components
+====
+
+. Fork or clone this repo onto your local machine (see <<Cloning This Repo,above>>)
+. `cd` to the root of the folder
+. Run the following commandfootnote:[If you are not using `zsh` locally, you can omit the `-v ~/.oh-my-zsh:/home/jboss/.oh-my-zsh` part of the `docker run` command below.  You can also <<Creating a new shell container,create a new version of the shell container>>]:
++
+----
+docker run -u root -it -v ~/.kube:/opt/app-root/.kube -v ~/.azure:/opt/app-root/.azure -v ~/.ssh:/opt/app-root/.ssh -v $(pwd):/opt/app-root/src quay.io/mhildenb/az-demo-shell:latest /bin/zsh
+----
++
+. Run the following script to install the main part of the demo by running this command
+** NOTE: `-p` flag is optional and `-i` installs prerequisites
++
+----
+$DEMO_HOME/scripts/create-demo.sh -p $PROJECT_PREFIX -i
+----
+
+== Appendix ==
+
+=== Creating a new shell container
+
+As the underlying devcontainer is updated to include new versions of supporting tools, you may need to create new versions of the containers used to run the demo from a shell.  You can create a new shell easily.
+
+NOTE: if you want to create your own version of the container, set the `REGISTRY` and `ACCOUNT` parameters below to match your needs.
+
+. Clone the repo to a machine with docker (or equivalent) installed and change to the root of the repo 
+. Ensure that you are logged into quay.io (or whichever registry you'll be storing your container too)
+. Go into the `.devcontainer` directory that is just under the root of this repo
++
+----
+cd .devcontainer
+----
++
+. Run the following command 
++
+----
+# instead of 1.0 change to whatever tag you want to use
+DEMO_SHELL_TAG=1.0
+# This is an optional parameter, defaults to quay.io
+REGISTRY=quay.io
+# This is an optional parameter, defaults to mhildenb
+ACCOUNT=mhildenb
+./build-n-push-shell.sh ${DEMO_SHELL_TAG} ${REGISTRY} ${ACCOUNT}
+----
++
+. When the command is done, you will be able to access the following container for use: `${REGISTRY}/${ACCOUNT}/az-demo-shell:latest`

@@ -1,0 +1,97 @@
+kind: Template
+apiVersion: v1
+metadata:
+  annotations:
+    description: A SQL Server Database running on Red Hat Enterprise Linux
+    # For creating a custom icon for a template: https://medium.com/@lbroudoux/use-custom-icons-for-your-openshift-templates-7993e5ded646
+    iconClass: icon-mssql
+    openshift.io/display-name: SQL Server on Linux 
+    openshift.io/provider-display-name: Local
+    tags: sqlserver
+    template.openshift.io/long-description: This template defines to create a MSSQL server running on Red Hat's Enterprise Linux Operating System
+  name: sql-server-template
+parameters:
+  - name: SQLSERVER_IMAGE 
+    displayName: SQLServer Image
+    description: The name of the image to use for SQL Server
+    value: mcr.microsoft.com/mssql/server:2019-latest
+    required: true 
+  - name: SA_SECRET
+    displayName: Administrator Secret
+    description: The name of the secret that contains adminstration details for the database
+    value: sql-secret
+    required: true
+  - name: SERVICE_NAME
+    displayName: Database Service Name
+    description: The name the sql server service should be published on
+    value: "hplus-db"
+    required: true
+objects:
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    labels:
+      app: ${SERVICE_NAME}
+      app.kubernetes.io/component: ${SERVICE_NAME}
+      app.kubernetes.io/instance: ${SERVICE_NAME}
+      app.kubernetes.io/part-of: ${SERVICE_NAME}
+      app.openshift.io/runtime: mssql
+    name: ${SERVICE_NAME}
+  spec:
+    progressDeadlineSeconds: 600
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: ${SERVICE_NAME}
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        labels:
+          app: ${SERVICE_NAME}
+          deploymentconfig: ${SERVICE_NAME}
+      spec:
+        containers:
+        - env:
+          - name: ACCEPT_EULA
+            value: "Y"
+          envFrom:
+          - secretRef:
+              name: ${SA_SECRET}
+          image: mcr.microsoft.com/mssql/server:2019-latest
+          imagePullPolicy: IfNotPresent
+          name: ${SERVICE_NAME}
+          ports:
+          - containerPort: 1433
+            protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: ${SERVICE_NAME}
+    labels:
+      app: ${SERVICE_NAME}
+      app.kubernetes.io/component: ${SERVICE_NAME}
+      app.kubernetes.io/instance: ${SERVICE_NAME}
+      app.kubernetes.io/part-of: ${SERVICE_NAME}
+      app.openshift.io/runtime: mssql
+  spec:
+    ports:
+    - port: 1433
+      protocol: TCP
+      targetPort: 1433
+    selector:
+      app: ${SERVICE_NAME}
+    sessionAffinity: None
+    type: ClusterIP

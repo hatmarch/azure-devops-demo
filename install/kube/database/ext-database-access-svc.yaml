@@ -1,0 +1,16 @@
+# Use this service to connect to the VM over RDP.  Just look at the service and see what the LoadBalancer IP is.  When you can connect on the exposed port of the loadbalancer (here 3389)
+# Article with this information found here: https://medium.com/cooking-with-azure/using-kubevirt-in-azure-kubernetes-service-part-3-windows-vm-363d6b653d7
+apiVersion: v1
+kind: Service
+metadata:
+  name: ext-database-access
+spec:
+  externalTrafficPolicy: Cluster
+  ports:
+  - port: 1433
+    name: rdp
+    protocol: TCP
+    targetPort: 1433
+  selector:
+    app: hplus-db
+  type: LoadBalancer

@@ -1,0 +1,75 @@
+# syntax = docker/dockerfile:1.0-experimental
+
+#
+# This is the base dockerfile to be used with the BUILDKIT to build the 
+# image that the .devcontainer docker image is based on
+# 
+FROM registry.redhat.io/ubi8/dotnet-31
+
+USER root
+
+# install the subscription manager so that we can get at the necessary repos to install things
+# like skopeo and eb cli prerequisites
+RUN dnf install -y subscription-manager
+
+ENV ACCEPT_EULA="y"
+
+# Install repo for azure cli
+RUN rpm --import https://packages.microsoft.com/keys/microsoft.asc 
+COPY base-image-assets/azure-cli.repo /etc/yum.repos.d/azure-cli.repo
+
+# Install repo for SQL Server tools
+RUN curl https://packages.microsoft.com/config/rhel/8/prod.repo > /etc/yum.repos.d/msprod.repo
+
+# command line for this would look something like
+# DOCKER_BUILDKIT=1 docker build --progress=plain --secret id=myuser,src=../docker-secrets/myuser.txt --secret id=mypass,src=../docker-secrets/mypass.txt -f Dockerfile-windev-base -t quay.io/mhildenb/win-demo-base:1.0 .
+RUN --mount=type=secret,id=myuser --mount=type=secret,id=mypass \
+    subscription-manager register  --username=$(cat /run/secrets/myuser) \
+    --password=$(cat /run/secrets/mypass) --auto-attach
+
+RUN dnf clean all && rm -r /var/cache/dnf  && dnf upgrade -y --allowerasing --nobest --skip-broken && \
+    dnf update -y --allowerasing --nobest --skip-broken && \
+# for htpasswd support 
+# install skopeo, wget, and zsh
+    dnf install -y skopeo wget zsh jq iputils vi httpd-tools procps azure-cli git mssql-tools unixODBC-devel && \
+    dnf clean all && rm -r /var/cache/dnf
+
+# install stern
+RUN cd /usr/local/bin && \
+    wget https://github.com/wercker/stern/releases/download/1.11.0/stern_linux_amd64 -O /usr/local/bin/stern && \
+    chmod 755 /usr/local/bin/stern && \
+# instal knative client
+    wget -qO- https://mirror.openshift.com/pub/openshift-v4/clients/serverless/0.17.3/kn-linux-amd64-0.17.3.tar.gz | tar -zxvf - -C /usr/local/bin ./kn && chmod 755 /usr/local/bin/kn && \
+# NOTE: instead of hey which might be discontinued, use ApacheBench (ab) which is downloaded as part of 
+# httpd-tools.  See https://stackoverflow.com/questions/4314827/is-there-any-link-to-download-ab-apache-benchmark
+# install istioctl
+    curl -L https://github.com/istio/istio/releases/download/1.4.7/istioctl-1.4.7-linux.tar.gz | tar -zxvf - -C /usr/local/bin && chmod 755 /usr/local/bin/istioctl
+
+# install AWS cli
+RUN curl "https://d1vvhvl2y92vvt.cloudfront.net/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
+    unzip awscliv2.zip && ./aws/install && rm awscliv2.zip && rm -rf ./aws 
+    # && ln -s /usr/local/bin/aws2 /usr/local/bin/aws
+
+# install a more modern version of tkn
+RUN curl -L https://github.com/tektoncd/cli/releases/download/v0.11.0/tkn_0.11.0_Linux_x86_64.tar.gz | \
+    tar -xvzf - -C /usr/local/bin/ tkn && chmod 755 /usr/local/bin/tkn
+
+# overwrite existing oc with the absolute newest version of the openshift client
+RUN curl -L https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz | \
+    tar -xvzf - -C /usr/bin/ oc && chmod 755 /usr/bin/oc
+
+# Add latest helm 3.0 client
+RUN wget https://mirror.openshift.com/pub/openshift-v4/clients/helm/latest/helm-linux-amd64 -O /usr/local/bin/helm && \
+    chmod 755 /usr/local/bin/helm
+
+RUN wget https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl -O /usr/local/bin/kubectl && \
+    chmod 755 /usr/local/bin/kubectl
+
+RUN subscription-manager unregister
+
+USER default
+
+# install and configure ohmyzsh for `default` user
+RUN wget https://github.com/robbyrussell/oh-my-zsh/raw/master/tools/install.sh -O - | zsh
+COPY base-image-assets/.zshrc.example $HOME/.zshrc
+

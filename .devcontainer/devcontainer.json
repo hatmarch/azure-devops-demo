@@ -1,0 +1,56 @@
+{
+	"name": "Azure DevOps Demo",
+	"dockerFile": "Dockerfile",
+	"runArgs": [
+		"-v", "${env:HOME}/.aws:/opt/app-root/.aws",
+		"-v", "${env:HOME}/.azure:/opt/app-root/.azure",
+		"-v", "${env:HOME}/.kube:/opt/app-root/.kube",
+		"-v", "${env:HOME}/.vs-kubernetes:/opt/app-root/.vs-kubernetes",
+		// "-v",  "/etc/localtime:/etc/localtime:ro",
+		// use local .oh-my-zsh configuration if it exists (overwriting one in container).
+		// comment the following line out if you want to use local installation on container instead
+		"-v", "${env:HOME}/.oh-my-zsh:/opt/app-root/.oh-my-zsh",
+		"-v", "${env:HOME}/.helm:/opt/app-root/.helm",
+		"-v", "${env:HOME}/.ssh:/opt/app-root/.ssh",
+		"-e", "AWS_PROFILE=redhat",
+		"-e", "REGION=ap-southeast-2",
+		"-e", "AZ_RESOURCE_GROUP=${localEnv:AZ_RESOURCE_GROUP}"
+		//"AWS_PROFILE=${env:AWS_PROFILE}"
+	],
+	// open these ports for port-forwarding to host during demo
+	"forwardPorts": [8081,9000],
+	"extensions": [
+		"humao.rest-client",
+		"redhat.vscode-camelk",
+		"ms-dotnettools.csharp",
+		"asciidoctor.asciidoctor-vscode"
+	],
+	"settings":{
+		"terminal.integrated.shell.linux": "/bin/zsh",
+		"workbench.colorTheme": "Default Light+",
+		"http.proxyStrictSSL": false,
+		"workbench.tips.enabled": false,
+		"vs-kubernetes": { 
+			"vs-kubernetes.namespace": "", 
+			"vs-kubernetes.kubectl-path": "/usr/local/bin/kubectl", 
+			"vs-kubernetes.helm-path": "", 
+			"vs-kubernetes.draft-path": "", 
+			"vs-kubernetes.minikube-path": "", 
+			"vs-kubernetes.kubectlVersioning": "user-provided", 
+			"vs-kubernetes.outputFormat": "yaml", 
+			"vs-kubernetes.kubeconfig": "/opt/app-root/.kube/config", 
+			"vs-kubernetes.autoCleanupOnDebugTerminate": false, 
+			"vs-kubernetes.nodejs-autodetect-remote-root": true, 
+			"vs-kubernetes.nodejs-remote-root": "", 
+			"vs-kubernetes.nodejs-debug-port": 9229, 
+			"checkForMinikubeUpgrade": true, 
+			"logsDisplay": "webview", 
+			"imageBuildTool": "Docker",
+			"vs-kubernetes.knownKubeconfigs": [],
+			"vs-kubernetes.kubectl-path.linux": "/usr/local/bin/kubectl",
+			"vs-kubernetes.helm-path.linux": "/opt/app-root/.vs-kubernetes/tools/helm/linux-amd64/helm",
+			"vs-kubernetes.minikube-path.linux": "",
+			"vs-kubernetes.draft-path.linux": ""
+		} 
+	}
+}
