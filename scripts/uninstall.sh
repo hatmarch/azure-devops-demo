@@ -71,7 +71,15 @@ main() {
 
     if [[ -n "${full_flag:-""}" ]]; then
         remove-operator "openshift-pipelines-operator-rh" || true
+
+        remove-operator "codeready-workspaces" || true
     fi
+
+    # delete the checluster before deleting the codeready project
+    oc delete checluster --all -n codeready
+
+    # delete the codeready project as well as any projects created for a given user
+    oc get project -o name | grep codeready | xargs oc delete || true
 
     PROJECTS=( $dev_prj $stage_prj $sup_prj )
     for PROJECT in ${PROJECTS[@]}; do
@@ -88,7 +96,7 @@ main() {
         echo "Cleaning up CRDs"
 
         # delete all CRDS that maybe have been left over from operators
-        CRDS=( "tekton.dev" )
+        CRDS=( "tekton.dev" "checlusters.org.eclipse.che" )
         for CRD in "${CRDS[@]}"; do
             remove-crds ${CRD} || true
         done
