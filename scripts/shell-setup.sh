@@ -14,7 +14,7 @@ if [[ -z "${SCRIPT}" ]]; then
 fi
 
 export DEMO_HOME=$( cd "$(dirname "${SCRIPT}")/.." ; pwd -P )
-export PROJECT_PREFIX=${1:-k8-win}
+export PROJECT_PREFIX=${1:-az-demo}
 export dev_prj="${PROJECT_PREFIX}-dev"
 export stage_prj="${PROJECT_PREFIX}-stage"
 export sup_prj="${PROJECT_PREFIX}-support"
