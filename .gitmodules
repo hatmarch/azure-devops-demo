@@ -1,0 +1,4 @@
+[submodule "eShopOnWeb"]
+	path = eShopOnWeb
+	url = https://github.com/hatmarch/eShopOnWeb.git
+	branch = feature-fmg
