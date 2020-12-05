@@ -1,8 +1,21 @@
 {
 	"name": "Azure DevOps Demo",
+	"build": {
+        "dockerfile": "Dockerfile",
+        "args": {
+        "USERNAME": "default",
+        "INSTALL_NODE": "false",
+        "NODE_VERSION": "lts/*",
+        "INSTALL_AZURE_CLI": "false"
+        }
+    },
+
+		// Comment out to connect as root user. See https://aka.ms/vscode-remote/containers/non-root.
+	// make sure this is the same as USERNAME above
+	"remoteUser": "default",
 	"dockerFile": "Dockerfile",
 	"runArgs": [
-		"-v", "${env:HOME}/.aws:/opt/app-root/.aws",
+		//"-v", "${env:HOME}/.aws:/opt/app-root/.aws",
 		"-v", "${env:HOME}/.azure:/opt/app-root/.azure",
 		"-v", "${env:HOME}/.kube:/opt/app-root/.kube",
 		"-v", "${env:HOME}/.vs-kubernetes:/opt/app-root/.vs-kubernetes",
@@ -18,13 +31,35 @@
 		//"AWS_PROFILE=${env:AWS_PROFILE}"
 	],
 	// open these ports for port-forwarding to host during demo
-	"forwardPorts": [8081,9000],
+	"forwardPorts": [5000, 5001],
 	"extensions": [
 		"humao.rest-client",
 		"redhat.vscode-camelk",
 		"ms-dotnettools.csharp",
-		"asciidoctor.asciidoctor-vscode"
+		"asciidoctor.asciidoctor-vscode",
+		"formulahendry.dotnet-test-explorer",
+        "ms-vscode.vscode-node-azure-pack",
+        "ms-kubernetes-tools.vscode-kubernetes-tools",
+		"redhat.vscode-yaml",
+		"ms-vscode.azure-account"
 	],
+	// [Optional] To reuse of your local HTTPS dev cert, first export it locally using this command:
+	//  * Windows PowerShell:
+	//     dotnet dev-certs https --trust; dotnet dev-certs https -ep "$env:USERPROFILE/.aspnet/https/aspnetapp.pfx" -p "SecurePwdGoesHere"
+	//  * macOS/Linux terminal:
+	//     dotnet dev-certs https --trust; dotnet dev-certs https -ep "${HOME}/.aspnet/https/aspnetapp.pfx" -p "SecurePwdGoesHere"
+	//
+	// Next, after running the command above, uncomment lines in the 'mounts' and 'remoteEnv' lines below,
+	// and open / rebuild the container so the settings take effect.
+	//
+	"mounts": [
+		// "source=${env:HOME}${env:USERPROFILE}/.aspnet/https,target=/home/vscode/.aspnet/https,type=bind"
+	],
+	"remoteEnv": {
+		// "ASPNETCORE_Kestrel__Certificates__Default__Password": "SecurePwdGoesHere",
+		// "ASPNETCORE_Kestrel__Certificates__Default__Path": "/home/vscode/.aspnet/https/aspnetapp.pfx",
+	},
+
 	"settings":{
 		"terminal.integrated.shell.linux": "/bin/zsh",
 		"workbench.colorTheme": "Default Light+",
@@ -52,5 +87,9 @@
 			"vs-kubernetes.minikube-path.linux": "",
 			"vs-kubernetes.draft-path.linux": ""
 		} 
-	}
+	},
+
+	// Use 'postCreateCommand' to run commands after the container is created.
+	// "postCreateCommand": "dotnet restore"
+
 }
