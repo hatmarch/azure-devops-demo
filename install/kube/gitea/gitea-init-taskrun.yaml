@@ -5,13 +5,13 @@ metadata:
 spec:
   taskSpec:
     params:
-      - name: GOGS_USER
+      - name: GITEA_USER
         type: string
-        description: Gogs admin username
+        description: Gitea admin username
         default: gitea
-      - name: GOGS_PASSWORD
+      - name: GITEA_PASSWORD
         type: string
-        description: Gogs admin password
+        description: Gitea admin password
         default: gitea
       - name: GITEA_SVC
         type: string
@@ -31,8 +31,8 @@ spec:
 
           set -Eeuxo pipefail
 
-          #OUTPUT = $(oc exec svc/$(params.GITEA_SVC) -- /home/gitea/gitea -w /home/gitea/ -c /home/gitea/conf/app.ini admin create-user --username $(params.GOGS_USER) --password $(params.GOGS_PASSWORD) --email gogs@gogs.com --access-token)
-          oc exec svc/$(params.GITEA_SVC) -- /home/gitea/gitea -w /home/gitea/ -c /home/gitea/conf/app.ini admin create-user --username $(params.GOGS_USER) --password gogs --email $(params.GOGS_USER)@gogs.com \
+          #OUTPUT = $(oc exec svc/$(params.GITEA_SVC) -- /home/gitea/gitea -w /home/gitea/ -c /home/gitea/conf/app.ini admin create-user --username $(params.GITEA_USER) --password $(params.GITEA_PASSWORD) --email $(params.GITEA_USER)@gitea.com --access-token)
+          oc exec svc/$(params.GITEA_SVC) -- /home/gitea/gitea -w /home/gitea/ -c /home/gitea/conf/app.ini admin create-user --username $(params.GITEA_USER) --password $(params.GITEA_PASSWORD) --email $(params.GITEA_USER)@gitea.com \
             --must-change-password=false --access-token
           # TOKEN = $(grep "Access token" ${OUTPUT} | sed "s#Access token was successfully created... \(.*\)$#\1#")
 
@@ -50,18 +50,18 @@ spec:
           import os
           import requests 
 
-          gogs_user = "$(params.GOGS_USER)"
-          gogs_pwd = "$(params.GOGS_PASSWORD)"
+          gitea_user = "$(params.GITEA_USER)"
+          gitea_password = "$(params.GITEA_PASSWORD)"
           # FIXME: Webhook url could be the name of the svc with the port at the end
           # webhookURL = "http://" + os.popen('oc get route webhook -o template --template="{{.spec.host}}"').read()
-          gogsURL = "http://" + gogs_user + ":" + gogs_pwd + "@" + os.popen('oc get svc $(params.GITEA_SVC) -o template --template="{{.spec.clusterIP}}"').read() + ":3000"
-          print("Gogs url is: " + gogsURL)
+          giteaURL = "http://" + gitea_user + ":" + gitea_password + "@" + os.popen('oc get svc $(params.GITEA_SVC) -o template --template="{{.spec.clusterIP}}"').read() + ":3000"
+          print("Gitea url is: " + giteaURL)
 
           # create git repo for main demo
           data_repo = '{"clone_addr": "https://github.com/hatmarch/azure-devops-demo.git", "uid": 1, "repo_name": "az-devops-demo-support"}'
           # headers = {"Authorization": "token ${TOKEN}", "Content-Type": "application/json" }
           headers = {"Content-Type": "application/json"}
-          resp = requests.post(url = gogsURL + "/api/v1/repos/migrate", headers = headers, data = data_repo)  
+          resp = requests.post(url = giteaURL + "/api/v1/repos/migrate", headers = headers, data = data_repo)  
 
           if resp.status_code != 200 and resp.status_code != 201:
             print("Error creating git repo (status code: {})".format(resp.status_code))
@@ -70,18 +70,29 @@ spec:
             print("Created git repo az-devops-demo-support")
 
           # create the windows code repo
-          data_repo = '{"clone_addr": "https://github.com/hatmarch/OdeToFood.git", "uid": 1, "repo_name": "ode-to-food"}'
-          resp = requests.post(url = gogsURL + "/api/v1/repos/migrate", headers = headers, data = data_repo)  
+          data_repo = '{"clone_addr": "https://github.com/hatmarch/eShopOnWeb.git", "uid": 1, "repo_name": "eshop"}'
+          resp = requests.post(url = giteaURL + "/api/v1/repos/migrate", headers = headers, data = data_repo)  
 
           if resp.status_code != 200 and resp.status_code != 201:
             print("Error creating git repo (status code: {})".format(resp.status_code))
             print(resp.content)
           else:
-            print("Created git repo ode-to-food")
+            print("Created git repo eshop")
+
+          # update the default branch for the petclinic repo
+          data_patch = '{"default_branch": "feature-fmg"}'
+          resp = requests.patch(url = giteaURL + "/api/v1/repos/gitea/eshop", headers = headers, data = data_patch)
+          
+          if resp.status_code != 200:
+            print("Error updating default branch on git repo (status code: {})".format(resp.status_code))
+            print(resp.content)
+          else:
+            print("Updated default branch on repo eshop to feature-fmg")
+
 
           # # configure webhook
-          # data_webhook = '{"type": "gogs", "config": { "url": "' + webhookURL + '", "content_type": "json"}, "events": ["push"], "active": true}'
-          # resp = requests.post(url = gogsURL + "/api/v1/repos/" + gogs_user + "/spring-petclinic/hooks", 
+          # data_webhook = '{"type": "gitea", "config": { "url": "' + webhookURL + '", "content_type": "json"}, "events": ["push"], "active": true}'
+          # resp = requests.post(url = giteaURL + "/api/v1/repos/" + gitea_user + "/spring-petclinic/hooks", 
           #                     headers = headers, 
           #                     data = data_webhook) 
           
@@ -92,8 +103,8 @@ spec:
           #   print("Configured webhook: " + webhookURL)
           
           # # configure argo webhook
-          # data_webhook = '{"type": "gogs", "config": { "url": "https://argocd-server.argocd.svc.cluster.local/api/webhook", "content_type": "json"}, "events": ["push"], "active": true}'
-          # resp = requests.post(url = gogsURL + "/api/v1/repos/" + gogs_user + "/petclinic-config/hooks", 
+          # data_webhook = '{"type": "gitea", "config": { "url": "https://argocd-server.argocd.svc.cluster.local/api/webhook", "content_type": "json"}, "events": ["push"], "active": true}'
+          # resp = requests.post(url = giteaURL + "/api/v1/repos/" + gitea_user + "/petclinic-config/hooks", 
           #                     headers = headers, 
           #                     data = data_webhook) 
 
