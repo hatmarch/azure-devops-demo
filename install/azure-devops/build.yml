@@ -1,0 +1,36 @@
+trigger:
+  branches:
+    include:
+    - feature-fmg
+resources:
+  repositories:
+  - repository: self
+    type: git
+    ref: feature-fmg
+jobs:
+- job: Job_1
+  displayName: Build Dotnet Code and Image
+  pool:
+    vmImage: ubuntu-20.04
+  steps:
+  - checkout: self
+  - task: UseDotNet@2
+    displayName: Use .NET Core sdk 3.1.x
+    enabled: False
+    inputs:
+      version: 3.1.x
+  - task: DotNetCoreCLI@2
+    displayName: dotnet build
+    enabled: False
+    inputs:
+      projects: ./eShopOnWeb.sln
+  - task: DockerInstaller@0
+    displayName: Install Docker 17.09.0-ce
+  - task: Docker@2
+    displayName: buildAndPush
+    inputs:
+      containerRegistry: 1e8b919a-2b7c-4f3b-bd2d-43cadf512093
+      repository: mhildenb/eshopweb
+      Dockerfile: ./src/Web/Dockerfile
+      buildContext: .
+...
