@@ -93,6 +93,10 @@ azure-down() {
     az vm deallocate --ids $(az vm list -g ${RESOURCE_GROUP} --query "[].id" -o tsv)
 }
 
+# assume that port forwarding has been setup for use with a database
+export ConnectionStrings__CatalogConnection='Server=localhost;UID=sa;Password=yourStrong(!)Password;Integrated Security=False;'
+export ConnectionStrings__IdentityConnection='Server=localhost;UID=sa; Password=yourStrong(!)Password; Integrated Security=False;'
+
 if [[ -f $DEMO_HOME/install/openshift-installer/kustomize/installer-workspace/auth/kubeconfig ]]; then
     echo "Found kubeconfig for created cluster.  Setting KUBECONFIG to point to it"
     export KUBECONFIG=$DEMO_HOME/install/openshift-installer/kustomize/installer-workspace/auth/kubeconfig
