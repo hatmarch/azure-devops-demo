@@ -50,6 +50,8 @@ get_and_validate_options() {
 declare PORT_FORWARD_PID=""
 
 cleanup() {
+    echo "In cleanup"
+
     if [[ -n "${PORT_FORWARD_PID}" ]]; then
         echo "Stopping port-forward task at ${PORT_FORWARD_PID}"
         kill ${PORT_FORWARD_PID}
@@ -57,9 +59,6 @@ cleanup() {
 }
 
 main() {
-    # import common functions
-    . $SCRIPT_DIR/common-func.sh
-
     trap 'cleanup' ERR EXIT SIGTERM SIGINT
 
     get_and_validate_options "$@"
@@ -67,7 +66,7 @@ main() {
     # port forward to the database
     echo "Setting up localhost:1433 to port-forward to the database"
     oc port-forward svc/${DATABASE_SVC} 1433:1433 -n $PROJECT &
-    PORT_FORWARD_PID=$!
+    PORT_FORWARD_PID="$!"
 
     cd $DEMO_HOME/eShopOnWeb/src/Web
 
