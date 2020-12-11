@@ -94,8 +94,14 @@ main() {
     # actually create the database (FIXME: Do this via the template)
     oc apply -f $DEMO_HOME/install/kube/database/database-deploy.yaml -n $dev_prj
 
+    echo "Initializing database"
+#    ${SCRIPT_DIR}/initialize-database.sh $dev_prj
+
     echo "Installing CodeReady Workspaces"
     ${SCRIPT_DIR}/install-crw.sh codeready
+
+    echo "Creating PVCs"
+    oc apply -R -f $DEMO_HOME/install/kube/storage/ -n $dev_prj
 
     echo "Installing Tekton Tasks"
     #oc apply -R -f install/kube/tekton/tasks/ -n $sup_prj
