@@ -31,3 +31,4 @@ docker-secrets/
 
 pull-secret.txt
 installer-workspace/
+secrets/

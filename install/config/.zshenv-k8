@@ -1,0 +1,4 @@
+ConnectionStrings__CatalogConnection=Server=hplus-db; UID=sa; Password=@SA_PASSWORD@; Integrated Security=False; Initial Catalog=Microsoft.eShopOnWeb.CatalogDb;
+ConnectionStrings__IdentityConnection=Server=hplus-db; UID=sa; Password=@SA_PASSWORD@; Integrated Security=False; Initial Catalog=Microsoft.eShopOnWeb.Identity;
+ASPNETCORE_ENVIRONMENT=Development
+ASPNETCORE_URLS=http://*:8080
