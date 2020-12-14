@@ -5,6 +5,8 @@ set -Eeuo pipefail
 declare -r SCRIPT_DIR=$(cd -P $(dirname $0) && pwd)
 declare PROJECT_PREFIX="az-demo"
 declare SA_PASSWORD=""
+declare AZURE_PROJECT="fmg-demo"
+declare AZURE_ORG=""
 
 display_usage() {
 cat << EOF
@@ -15,6 +17,8 @@ $0: Azure DevOps Demo --
     -i         [optional] Install prerequisites
     -p <TEXT>  [optional] Project prefix to use.  Defaults to "az-demo"
     -q <TEXT>  The password to use for the sa user of the database
+    -o <TEXT>  The URL of the Azure organization (for use with az cli)
+    -a <TEXT>  [optional] The Azure project in question.  Default to fmg-demo
 
 EOF
 }
@@ -36,6 +40,8 @@ get_and_validate_options() {
       case "${option}" in
           i  ) prereq_flag=true;;
           p  ) p_flag=true; PROJECT_PREFIX="${OPTARG}";;
+          a  ) a_flag=true; AZURE_PROJECT="${OPTARG}";;
+          o  ) o_flag=true; AZURE_ORG="${OPTARG}";;
           q  ) q_flag=true; SA_PASSWORD="${OPTARG}";;
           h  ) display_usage; exit;;
           \? ) printf "%s\n\n" "  Invalid option: -${OPTARG}" >&2; display_usage >&2; exit 1;;
@@ -55,6 +61,12 @@ get_and_validate_options() {
       display_usage >&2
       exit 1
   fi
+
+  if [[ -z "${AZURE_ORG}" ]]; then
+      printf '%s\n\n' 'ERROR - Need to specify the URL of an Azure organization' >&2
+      display_usage >&2
+      exit 1
+  fi
 }
 
 main() {
@@ -71,6 +83,28 @@ main() {
     if [[ -n "${prereq_flag:-}" ]]; then
         ${SCRIPT_DIR}/install-prereq.sh 
     fi
+
+    #
+    # Project creation
+    #
+    az devops project create --name ${AZURE_PROJECT} --visibility public
+
+    # Initialize the azure cli
+    az devops configure --defaults organization=${AZURE_ORG} project=${AZURE_PROJECT}
+
+    #
+    # Create fresh azure repo for demo (add --debug to both to see verbose output)
+    #
+    declare AZURE_REPO=eshop
+    az repos create --name ${AZURE_REPO}   
+    az repos import create --git-url https://github.com/hatmarch/eShopOnWeb.git -r ${AZURE_REPO}
+    az repos update --default-branch feature-fmg -r ${AZURE_REPO} 
+
+    echo "Creating Azure DevOps Pipeline from YAML"
+    # NOTE: The nested %\" and #\" removes the trailing and leading (repectively) quotes (if they exist) from the output of the repo show query
+    # See also: https://stackoverflow.com/questions/9733338/shell-script-remove-first-and-last-quote-from-a-variable
+    az pipelines create --name 'fmg-demo-yaml' --description 'Pipeline for FMG (YAML)' --repository ${${$(az repos show -r ${AZURE_REPO} --query webUrl)%\"}#\"} \
+        --branch feature-fmg --yml-path azure-pipelines.yml 
 
     #
     # create the dev project
@@ -150,16 +184,8 @@ main() {
         oc new-project $crw_user_ns
     }
 
-    echo "Writing secrets into environment templates..."
-    if [[ ! -d $DEMO_HOME/secrets ]]; then
-        mkdir $DEMO_HOME/secrets
-    fi
-    ENV_TEMPLATES=( .zshenv .zshenv-k8 )
-    for TEMPLATE in ${ENV_TEMPLATES[@]}; do
-        echo "Writing $DEMO_HOME/secrets/$TEMPLATE"
-        sed "s/@SA_PASSWORD@/${SA_PASSWORD}/" $DEMO_HOME/install/config/$TEMPLATE > $DEMO_HOME/secrets/$TEMPLATE
-    done
-    echo "done."
+    # Update environment templates
+    ${SCRIPT_DIR}/update-environment-templates.sh ${SA_PASSWORD}
 
     echo "Pre-seed the user codeready namespace (${crw_user_ns}) with environment secret"
     oc create secret generic codeready-env --from-file=.zshenv=$DEMO_HOME/secrets/.zshenv-k8 -n $crw_user_ns

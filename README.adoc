@@ -32,13 +32,15 @@ docker run -u root -it -v ~/.kube:/opt/app-root/.kube -v ~/.azure:/opt/app-root/
 +
 ----
 SA_PASSWORD=<the password to use for the sa user of the SQL database>
+AZURE_ORG=<the URL of the azure organization>
+AZURE_PROJECT=<the name of the azure project>
 ----
 +
 . Run the following script to install the main part of the demo by running this command
 ** NOTE: `-p` flag is optional and `-i` indicates that prerequisites (such as operators) should be installed
 +
 ----
-$DEMO_HOME/scripts/create-demo.sh -q $SA_PASSWORD -p $PROJECT_PREFIX -i
+$DEMO_HOME/scripts/create-demo.sh -q $SA_PASSWORD -p $PROJECT_PREFIX -o ${AZURE_ORG} -a ${AZURE_PROJECT} -i
 ----
 
 == Appendix ==
