@@ -64,7 +64,7 @@ main() {
     get_and_validate_options "$@"
 
     # port forward to the database
-    echo "Setting up localhost:1433 to port-forward to the database"
+    echo "Setting up localhost:1433 to port-forward to the database in project $PROJECT"
     oc port-forward svc/${DATABASE_SVC} 1433:1433 -n $PROJECT &
     PORT_FORWARD_PID="$!"
 
