@@ -94,8 +94,8 @@ azure-down() {
 }
 
 # assume that port forwarding has been setup for use with a database
-export ConnectionStrings__CatalogConnection='Server=localhost;UID=sa;Password=yourStrong(!)Password;Integrated Security=False;'
-export ConnectionStrings__IdentityConnection='Server=localhost;UID=sa; Password=yourStrong(!)Password; Integrated Security=False;'
+export ConnectionStrings__CatalogConnection='Server=localhost; UID=sa; Password=yourStrong(!)Password; Integrated Security=False; Initial Catalog=Microsoft.eShopOnWeb.CatalogDb;'
+export ConnectionStrings__IdentityConnection='Server=localhost; UID=sa; Password=yourStrong(!)Password; Integrated Security=False; Initial Catalog=Microsoft.eShopOnWeb.Identity;'
 
 if [[ -f $DEMO_HOME/install/openshift-installer/kustomize/installer-workspace/auth/kubeconfig ]]; then
     echo "Found kubeconfig for created cluster.  Setting KUBECONFIG to point to it"
