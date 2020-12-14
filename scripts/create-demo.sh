@@ -171,6 +171,11 @@ main() {
     echo "Create secret for deployment config in dev environment"
     oc create secret generic eshop-dev --from-env-file=$DEMO_HOME/secrets/.zshenv-k8 -n $dev_prj
 
+    oc adm policy add-role-to-user edit system:serviceaccount:$dev_prj:default -n $stage_prj
+    oc adm policy add-role-to-user edit -z default -n $dev_prj
+
+#    kubectl get serviceAccounts <service-account-name> -n <namespace> -o=jsonpath={.secrets[*].name}
+
     echo "Demo installation completed successfully!"
 }
 
