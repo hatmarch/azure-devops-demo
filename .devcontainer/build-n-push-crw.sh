@@ -6,4 +6,4 @@ declare -r SCRIPT_DIR=$(cd -P $(dirname $0) && pwd)
 
 declare SHELL_TAG=${1:-latest}
 
-$SCRIPT_DIR/build-n-push-common.sh az-demo-shell $SHELL_TAG 
+$SCRIPT_DIR/build-n-push-common.sh az-demo-crw $SHELL_TAG Dockerfile-crw

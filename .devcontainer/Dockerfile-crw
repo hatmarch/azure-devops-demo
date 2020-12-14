@@ -1,0 +1,13 @@
+FROM quay.io/mhildenb/az-demo-shell:latest
+
+USER root
+
+WORKDIR /projects
+
+COPY crw-assets/entrypoint.sh /opt/app-root/entrypoint.sh
+RUN chown default /opt/app-root/entrypoint.sh && chmod +x /opt/app-root/entrypoint.sh
+
+USER default
+
+ENTRYPOINT [ "/opt/app-root/entrypoint.sh" ]
+CMD [ "/usr/bin/zsh", "-c", "tail -f /dev/null" ]
