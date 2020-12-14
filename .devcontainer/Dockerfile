@@ -22,8 +22,6 @@ ENV PATH="$PATH:/opt/mssql-tools/bin"
 # RUN wget -qO- https://github.com/apache/camel-k/releases/download/v1.2.0/camel-k-client-1.2.0-linux-64bit.tar.gz | tar -zxvf - -C /usr/local/bin ./kamel && \
 #     chmod 755 /usr/local/bin/kamel
 
-# Add 
-
 USER default
 
 # this is done in the base image already (to support the demo shell images too), but for those that make
