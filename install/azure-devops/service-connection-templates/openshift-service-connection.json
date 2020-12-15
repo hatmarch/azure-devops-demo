@@ -1,0 +1,21 @@
+{
+    "data": {},
+    "name": "Demo-OpenShift-Cluster-From-CLI",
+    "type": "openshift",
+    "url": "https://api.cluster-b057.b057.example.opentlc.com:6443",
+    "createdBy": null,
+    "description": "",
+    "authorization": {
+        "parameters": {
+            "acceptUntrustedCerts": "true",
+            "certificateAuthorityFile": "",
+            "username": "@USER@",
+            "password": "@PASSWORD@"
+        },
+        "scheme": "UsernamePassword"
+    },
+    "isShared": false,
+    "isReady": true,
+    "owner": "library",
+    "serviceEndpointProjectReferences": null
+}

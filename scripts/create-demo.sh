@@ -7,6 +7,7 @@ declare PROJECT_PREFIX="az-demo"
 declare SA_PASSWORD=""
 declare AZURE_PROJECT="fmg-demo"
 declare AZURE_ORG=""
+declare AZURE_PIPELINE_NAME="fmg-demo-yaml"
 
 display_usage() {
 cat << EOF
@@ -84,10 +85,13 @@ main() {
         ${SCRIPT_DIR}/install-prereq.sh 
     fi
 
+    OPENSHIFT_SERVER_URL=$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}')
+    echo "Current OpenShift server URL is: ${OPENSHIFT_SERVER_URL}"
+
     #
     # Project creation
     #
-    az devops project create --name ${AZURE_PROJECT} --visibility public
+    az devops project create --name ${AZURE_PROJECT} --visibility public --organization ${AZURE_ORG}
 
     # Initialize the azure cli
     az devops configure --defaults organization=${AZURE_ORG} project=${AZURE_PROJECT}
@@ -103,8 +107,25 @@ main() {
     echo "Creating Azure DevOps Pipeline from YAML"
     # NOTE: The nested %\" and #\" removes the trailing and leading (repectively) quotes (if they exist) from the output of the repo show query
     # See also: https://stackoverflow.com/questions/9733338/shell-script-remove-first-and-last-quote-from-a-variable
-    az pipelines create --name 'fmg-demo-yaml' --description 'Pipeline for FMG (YAML)' --repository ${${$(az repos show -r ${AZURE_REPO} --query webUrl)%\"}#\"} \
+    az pipelines create --name ${AZURE_PIPELINE_NAME} --description 'Pipeline for FMG (YAML)' --repository ${${$(az repos show -r ${AZURE_REPO} --query webUrl)%\"}#\"} \
         --branch feature-fmg --yml-path azure-pipelines.yml 
+
+    # create variables for pipeline
+
+    # create service connections
+    # FIXME: sed  $DEMO_HOME/install/azure-devops/service-connection-templates/openshift-service-connection.json to tmp
+    # need to replace WHOLE URL, password, and user
+    OPENSHIFT_CONNECTION_ID=${${$(az devops service-endpoint create --service-endpoint-configuration \
+        $DEMO_HOME/install/azure-devops/service-connection-templates/openshift-service-connection.json --query id)%\"}#\"}
+    az devops service-endpoint update --id $OPENSHIFT_CONNECTION_ID --enable-for-all true
+    
+    K8_SA_SECRET_NAME=$(oc get sa default -n $sup_prj -o=json | jq -r '.secrets[] | select(.name | test("default-token")).name')
+    K8_SA_CA_CRT=
+    K8_SA_TOKEN=
+    # sed the $DEMO_HOME/install/azure-devops/service-connection-templates/k8-manifest-service-connection.json to /tmp before applying it
+
+    # create variables for the pipeline (NOTE: must strip any leading or trailing ")
+    az pipelines variable create --pipeline-name ${AZURE_PIPELINE_NAME} --name openshift_service_connection_id --value ${OPENSHIFT_CONNECTION_ID}
 
     #
     # create the dev project
@@ -126,6 +147,10 @@ main() {
     oc get ns $sup_prj 2>/dev/null || {
         oc new-project $sup_prj
     }
+
+    echo "Granting default service account of $sup_prj edit access to both $dev_prj and $stage_prj"
+    oc adm policy add-role-to-user edit system:serviceaccount:$sup_prj:default -n $stage_prj
+    oc adm policy add-role-to-user edit system:serviceaccount:$sup_prj:default -n $dev_prj    
 
     echo "Deploying Database"
     oc get secret sql-secret -n $dev_prj 2>/dev/null || {
@@ -196,9 +221,6 @@ main() {
 
     echo "Create secret for deployment config in dev environment"
     oc create secret generic eshop-dev --from-env-file=$DEMO_HOME/secrets/.zshenv-k8 -n $dev_prj
-
-    oc adm policy add-role-to-user edit system:serviceaccount:$dev_prj:default -n $stage_prj
-    oc adm policy add-role-to-user edit -z default -n $dev_prj
 
 #    kubectl get serviceAccounts <service-account-name> -n <namespace> -o=jsonpath={.secrets[*].name}
 
