@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:experimental
 FROM registry.redhat.io/codeready-workspaces/stacks-dotnet-rhel8@sha256:a61038e596c0c6104ae86cf4c5af5c60a6126feefa6e6585c540de2c48b723a2
 
 USER jboss
@@ -49,5 +50,7 @@ RUN subscription-manager unregister
 
 # enable az pipelines support
 RUN az extension add -n azure-devops 
+
+RUN chmod g+w -R /home/jboss
 
 USER jboss
