@@ -30,9 +30,10 @@ get_and_validate_options() {
 
   
   # parse options
-  while getopts ':ip:h' option; do
+  while getopts ':ip:sh' option; do
       case "${option}" in
           p  ) p_flag=true; PROJECT="${OPTARG}";;
+          s  ) skip_forward=true;;
           h  ) display_usage; exit;;
           \? ) printf "%s\n\n" "  Invalid option: -${OPTARG}" >&2; display_usage >&2; exit 1;;
           :  ) printf "%s\n\n%s\n\n\n" "  Option -${OPTARG} requires an argument." >&2; display_usage >&2; exit 1;;
@@ -64,9 +65,14 @@ main() {
     get_and_validate_options "$@"
 
     # port forward to the database
-    echo "Setting up localhost:1433 to port-forward to the database in project $PROJECT"
-    oc port-forward svc/${DATABASE_SVC} 1433:1433 -n $PROJECT &
-    PORT_FORWARD_PID="$!"
+    if [[ -z ${skip_forward:-} ]]; then
+        echo "Setting up localhost:1433 to port-forward to the database in project $PROJECT"
+
+        oc port-forward svc/${DATABASE_SVC} 1433:1433 -n $PROJECT &
+        PORT_FORWARD_PID="$!"
+    else
+        echo "Using existing port-forward connection (if it exists)"
+    fi
 
     cd $DEMO_HOME/eShopOnWeb/src/Web
 

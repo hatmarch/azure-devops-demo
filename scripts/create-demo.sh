@@ -217,25 +217,9 @@ main() {
     # echo "exit testing"
     # exit 0
 
-    echo "Deploying Database"
-    oc get secret sql-secret -n $dev_prj 2>/dev/null || {
-        oc create secret generic sql-secret --from-literal SA_PASSWORD="${SA_PASSWORD}" -n $dev_prj
-    }
-    # install this template to the openshift project so that it's available everywhere
+    echo "Deploying Database Template"
+   # install this template to the openshift project so that it's available everywhere
     oc apply -f $DEMO_HOME/install/kube/database/database-template.yaml -n openshift
-
-    # actually create the database (FIXME: Do this via the template)
-    oc apply -f $DEMO_HOME/install/kube/database/database-deploy.yaml -n $dev_prj
-    echo -n "Waiting for database deployment to appear..."
-    while [[ -z "$(oc get deploy hplus-db -n $dev_prj 2>/dev/null)" ]]; do
-        echo -n "."
-        sleep 1
-    done
-    echo "done!"
-    oc rollout status deploy/hplus-db -n $dev_prj
-
-    echo "Initializing database"
-    ${SCRIPT_DIR}/initialize-database.sh $dev_prj
 
     echo "Installing CodeReady Workspaces"
     ${SCRIPT_DIR}/install-crw.sh codeready
@@ -289,6 +273,24 @@ main() {
 
     PROJECTS=( $dev_prj $stage_prj )
     for PRJ in ${PROJECTS[@]}; do    
+        echo "Creating database in $PRJ"
+        # actually create the database (FIXME: Do this via the template)
+        oc get secret sql-secret -n $PRJ 2>/dev/null || {
+            oc create secret generic sql-secret --from-literal SA_PASSWORD="${SA_PASSWORD}" -n $PRJ
+        }
+    
+        oc apply -f $DEMO_HOME/install/kube/database/database-deploy.yaml -n $PRJ
+        echo -n "Waiting for database deployment to appear in $PRJ..."
+        while [[ -z "$(oc get deploy hplus-db -n $PRJ 2>/dev/null)" ]]; do
+            echo -n "."
+            sleep 1
+        done
+        echo "done!"
+        oc rollout status deploy/hplus-db -n $PRJ
+
+        echo "Initializing database in project $PRJ"
+        ${SCRIPT_DIR}/initialize-database.sh -p $PRJ
+
         oc get secret eshop-dev -n $PRJ 2>/dev/null || {
             echo "Create secret eshop-dev for deployment config in ${PRJ}"
             oc create secret generic eshop-dev --from-env-file=$DEMO_HOME/secrets/.zshenv-k8 -n $PRJ
