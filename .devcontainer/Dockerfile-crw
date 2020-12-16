@@ -3,3 +3,51 @@ FROM registry.redhat.io/codeready-workspaces/stacks-dotnet-rhel8@sha256:a61038e5
 USER jboss
 
 COPY nuget-cache /home/jboss/nuget-cache
+
+USER root
+
+ENV ACCEPT_EULA="y"
+
+# Install repo for azure cli
+RUN rpm --import https://packages.microsoft.com/keys/microsoft.asc 
+COPY base-image-assets/azure-cli.repo /etc/yum.repos.d/azure-cli.repo
+
+# Install repo for SQL Server tools
+RUN curl https://packages.microsoft.com/config/rhel/8/prod.repo > /etc/yum.repos.d/msprod.repo
+
+RUN --mount=type=secret,id=myuser --mount=type=secret,id=mypass \
+    subscription-manager register  --username=$(cat /run/secrets/myuser) \
+    --password=$(cat /run/secrets/mypass) --auto-attach
+
+RUN dnf clean all && rm -r /var/cache/dnf  && dnf upgrade -y --allowerasing --nobest --skip-broken && \
+    dnf update -y --allowerasing --nobest --skip-broken && \
+# for htpasswd support 
+# install skopeo, wget, and zsh
+    dnf install -y skopeo wget zsh jq iputils vi httpd-tools procps azure-cli git mssql-tools unixODBC-devel && \
+    dnf clean all && rm -r /var/cache/dnf
+
+# install stern
+RUN cd /usr/local/bin && \
+    wget https://github.com/wercker/stern/releases/download/1.11.0/stern_linux_amd64 -O /usr/local/bin/stern && \
+    chmod 755 /usr/local/bin/stern && \
+# instal knative client
+    wget -qO- https://mirror.openshift.com/pub/openshift-v4/clients/serverless/0.17.3/kn-linux-amd64-0.17.3.tar.gz | tar -zxvf - -C /usr/local/bin ./kn && chmod 755 /usr/local/bin/kn && \
+# NOTE: instead of hey which might be discontinued, use ApacheBench (ab) which is downloaded as part of 
+# httpd-tools.  See https://stackoverflow.com/questions/4314827/is-there-any-link-to-download-ab-apache-benchmark
+# install istioctl
+    curl -L https://github.com/istio/istio/releases/download/1.4.7/istioctl-1.4.7-linux.tar.gz | tar -zxvf - -C /usr/local/bin && chmod 755 /usr/local/bin/istioctl
+
+# install a more modern version of tkn
+RUN curl -L https://github.com/tektoncd/cli/releases/download/v0.11.0/tkn_0.11.0_Linux_x86_64.tar.gz | \
+    tar -xvzf - -C /usr/local/bin/ tkn && chmod 755 /usr/local/bin/tkn
+
+# overwrite existing oc with the absolute newest version of the openshift client
+RUN curl -L https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz | \
+    tar -xvzf - -C /usr/bin/ oc && chmod 755 /usr/bin/oc && ln -s /usr/bin/oc /usr/local/bin/kubectl
+
+RUN subscription-manager unregister
+
+# enable az pipelines support
+RUN az extension add -n azure-devops 
+
+USER jboss
