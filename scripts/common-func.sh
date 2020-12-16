@@ -36,3 +36,10 @@ remove-crds()
 
     oc get crd -oname | grep "${API_NAME}" | xargs oc delete
 }
+
+# Get rid of leading and trailing \" only
+# See also: https://stackoverflow.com/questions/9733338/shell-script-remove-first-and-last-quote-from-a-variable
+trim() {
+    TEMP=${1%\"}
+    echo ${TEMP#\"}
+}

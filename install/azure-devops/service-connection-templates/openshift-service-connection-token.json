@@ -1,0 +1,22 @@
+{
+    "administratorsGroup": null,
+    "authorization": {
+        "scheme": "Token",
+        "parameters": {
+            "acceptUntrustedCerts": "true",
+            "certificateAuthorityFile": "",
+            "apitoken": "@TOKEN@"
+        }
+    },
+    "createdBy": null,
+    "data": {},
+    "description": "",
+    "groupScopeId": null,
+    "name": "Demo-OpenShift-Cluster-Token",
+    "operationStatus": null,
+    "readersGroup": null,
+    "type": "openshift",
+    "url": "@SERVER_URL@",
+    "isShared": false,
+    "owner": "library"
+}

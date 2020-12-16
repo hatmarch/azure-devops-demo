@@ -2,7 +2,7 @@
     "data": {},
     "name": "Demo-OpenShift-Cluster-From-CLI",
     "type": "openshift",
-    "url": "https://api.cluster-b057.b057.example.opentlc.com:6443",
+    "url": "@SERVER_URL@",
     "createdBy": null,
     "description": "",
     "authorization": {

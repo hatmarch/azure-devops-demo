@@ -1,0 +1,32 @@
+{
+    "administratorsGroup": null,
+    "authorization": {
+        "scheme": "UsernamePassword",
+        "parameters": {
+            "registry": "@REGISTRY_URL@",
+            "username": "@USER@",
+            "password": "@PASSWORD@",
+            "email": ""
+        }
+    },
+    "createdBy": null,
+    "data": {
+        "registrytype": "Others",
+        "subscriptionId": "",
+        "subscriptionName": "",
+        "registryId": "",
+        "spnObjectId": "",
+        "appObjectId": "",
+        "azureSpnRoleAssignmentId": "",
+        "azureSpnPermissions": ""
+    },
+    "description": "",
+    "groupScopeId": null,
+    "name": "Container Registry Connection",
+    "operationStatus": null,
+    "readersGroup": null,
+    "type": "dockerregistry",
+    "url": "@REGISTRY_URL@",
+    "isShared": false,
+    "owner": "library"
+}
