@@ -25,6 +25,8 @@ echo "dev_prj is $dev_prj"
 echo "sup_prj is $sup_prj"
 echo "stage_prj is $stage_prj"
 
+source $DEMO_HOME/scripts/common-func.sh
+
 alias cpr='tkn pr cancel $(tkn pr list -o name --limit 1 | cut -f 2 -d "/")'
 alias ctr='tkn tr cancel $(tkn tr list -o name --limit 1 | cut -f 2 -d "/")'
 
