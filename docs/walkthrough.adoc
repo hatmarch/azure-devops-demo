@@ -22,5 +22,124 @@ The following sections review the different windows and potential setup necessar
 ----
 docker run -u root -it -v ~/.kube:/opt/app-root/.kube -v ~/.azure:/opt/app-root/.azure -v ~/.ssh:/opt/app-root/.ssh -v $(pwd):/opt/app-root/src quay.io/mhildenb/az-demo-shell:latest /bin/zsh
 ----
++
+. Open a second shell offscreen, the `hidden shell` and go to the root of the `azure-devops-demo` directory on your local machine
+. Run the same docker command from before
++
+----
+docker run -u root -it -v ~/.kube:/opt/app-root/.kube -v ~/.azure:/opt/app-root/.azure -v ~/.ssh:/opt/app-root/.ssh -v $(pwd):/opt/app-root/src quay.io/mhildenb/az-demo-shell:latest /bin/zsh
+----
 
-== Demo: TODO
+=== Windows
+
+. Have one window of Chrome with the following tabs
+.. Azure DevOps (already logged into your Organization, for example link:https://dev.azure.com/mhildenb[here])
+.. Topology view of the Dev Project
+. Have a second window with the following tabs
+.. Topology view of staging project
+
+== Demo: Create from Git
+
+. Enter the git options per below:
+** `git repo url`: `https://mhildenb@dev.azure.com/mhildenb/fmg-project/_git/eshop`
+** `Git Reference`: `feature-fmg`
++ 
+image:create-from-git-1.png[]
++
+. *Builder*: Select the .NET Core builder and the `3.1-ubi8` builder image per the image below
++
+image:create-from-git-2.png[]
++
+. IMPORTANT: Make sure the deployment is called `eshop`.  You don't need to set an application group
+. Check the `Add pipeline` option to create a Tekton Pipeline
++
+image:create-from-git-3.png[]
++
+. *Build Configuration:* Click on Builds link at bottom to review Build Configuration options and uncheck all the S2I options
++
+image:create-from-git-4.png[]
++
+. Click Deployments and add all the following from the `eshop-dev` secret (and as shown):
++
+image:create-from-git-5.png[]
++
+. Click `Create`.  You should be navigated to the topology view
+. After the deployment is created in the `hidden-shell` run the following command
++
+----
+oc annotate deploy/eshop --overwrite "app.openshift.io/vcs-uri"="https://github.com/hatmarch/eShopOnWeb.git" -n $dev_prj
+----
+. Notice that the deployment is pending.  Click on the deployment and show the resource screen
++
+image:initial-dev-deploy.png[]
++
+. Click on the Pipeline under `Pipeline Runs`
++
+image:pipeline-run-deploy-button.png[]
++
+. From the Pipeline details screen, open the `Actions` dropdown in the upper right and choose `Start`
++
+image:pipeline-screen.png[]
++
+. The pipeline details screen appears.  All the defaults are fine except:
+** `MINOR_VERSION`: This refers to the minor version of the dotnet sdk.  Choose `1`
+** `Workspace`: A PVC has been created in the dev project for this.  Choose it
++
+image:start-pipeline-details.png[]
++
+. _Make so a window with the Topology view is shown so that the new deployment can be seen when the build is completed_
+. Follow the logs from the *shell* as these are more stable than watching in real time in the UI.  To do so enter the following command:
++
+----
+oc project $dev_prj
+tkn pr logs -L -f  
+----
+. Go back to the topology view and click on the Build badge that has since appeared with a green check
++
+image:pipeline-badge.png[]
++
+. Show the UI version of the logs
+. Go back to the topology view and click on the Route badge
+. Login and put something in the cart
+.. We might show that the database will be shared between CRW and the code
+
+
+== Edit in CRW
+
+. Use kbd:[CMD + p] to open `_LoginPartial.cshtml` quickly
+. Search for `Login` text and update with something
+. Use kbd:[CMD + p] to open `oc-command-test.sh` quickly
+. Add 'oc get pods'
+. In the terminal run
++
+----
+git commit -m"Made changes for demo"
+git push origin
+----
++
+. When prompted for a password, switch to Azure DevOps
+. Navigate to the `AZURE_PROJECT` project
+. Click on Repos, then Clone, then in the popup window click `Generate Git Credentials`
++
+image:azure-devops-creds.png[]
++
+. Copy the password
+. Go back to the CRW window and paste in for password
+. Push should be successful
+
+== Show Azure DevOps
+
+. Go to Pipelines
+. Show that a pipeline has been triggered.  Click on the one that is running
++
+image:pipeline-runs.png[]
++
+. Click on the commit id to show that the changes were from CRW
++
+image:azure-repo-commit.png[]
++
+. Click into the pipeline details and then click into the job
++
+. Show the logs from all the different steps of the jobs
+** Pay special attention to the `oc-setup` and `deploy` parts of the jobs
+. 
