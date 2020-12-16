@@ -1,13 +1,5 @@
-FROM quay.io/mhildenb/az-demo-shell:latest
+FROM registry.redhat.io/codeready-workspaces/stacks-dotnet-rhel8@sha256:a61038e596c0c6104ae86cf4c5af5c60a6126feefa6e6585c540de2c48b723a2
 
-USER root
+USER jboss
 
-WORKDIR /projects
-
-COPY crw-assets/entrypoint.sh /opt/app-root/entrypoint.sh
-RUN chown default /opt/app-root/entrypoint.sh && chmod +x /opt/app-root/entrypoint.sh
-
-USER default
-
-ENTRYPOINT [ "/opt/app-root/entrypoint.sh" ]
-CMD [ "/usr/bin/zsh", "-c", "tail -f /dev/null" ]
+COPY nuget-cache /home/jboss/nuget-cache
