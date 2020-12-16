@@ -8,7 +8,7 @@ declare DOCKERFILE=${3:-Dockerfile}
 declare REGISTRY=${4:-"quay.io"}
 declare ACCOUNT=${5:-"mhildenb"}
 
-DOCKER_BUILDKIT=1 docker build --progress=plain -f ${DOCKERFILE} -t ${REGISTRY}/${ACCOUNT}/${IMAGE_NAME}:$SHELL_TAG .
+DOCKER_BUILDKIT=1 docker build --progress=plain --secret id=myuser,src=../docker-secrets/myuser.txt --secret id=mypass,src=../docker-secrets/mypass.txt -f ${DOCKERFILE} -t ${REGISTRY}/${ACCOUNT}/${IMAGE_NAME}:$SHELL_TAG .
 
 docker tag ${REGISTRY}/${ACCOUNT}/${IMAGE_NAME}:${SHELL_TAG} ${REGISTRY}/${ACCOUNT}/${IMAGE_NAME}:latest
 
