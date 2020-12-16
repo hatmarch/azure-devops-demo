@@ -173,9 +173,9 @@ main() {
     echo "Creating Kubernetes Manifest connection"
     K8_SA_SECRET_NAME=$(oc get sa default -n $sup_prj -o=json | jq -r '.secrets[] | select(.name | test("default-token")).name')
     K8_SA_CA_CRT=$(oc get secret $K8_SA_SECRET_NAME -o jsonpath='{.data.ca\.crt}' -n $sup_prj)
-    K8_SA_TOKEN=$(oc get secret $K8_SA_SECRET_NAME -o jsonpath='{.data.token}' -n $sup_prj)
+    K8_SA_TOKEN_ENC=$(oc get secret $K8_SA_SECRET_NAME -o jsonpath='{.data.token}' -n $sup_prj)
     sed "s/@CRT@/${K8_SA_CA_CRT}/g" $DEMO_HOME/install/azure-devops/service-connection-templates/k8-manifest-service-connection.json | \
-        sed "s/@TOKEN@/${K8_SA_TOKEN}/g" | sed "s#@SERVER_URL@#${OPENSHIFT_SERVER_URL}#" > /tmp/k8-manifest-conn.json
+        sed "s/@TOKEN@/${K8_SA_TOKEN_ENC}/g" | sed "s#@SERVER_URL@#${OPENSHIFT_SERVER_URL}#" > /tmp/k8-manifest-conn.json
     K8_MANIFEST_CONNECTION_ID=$(trim $(az devops service-endpoint create --service-endpoint-configuration /tmp/k8-manifest-conn.json --query id))
     az devops service-endpoint update --id $K8_MANIFEST_CONNECTION_ID --enable-for-all true > /dev/null
 
@@ -186,7 +186,7 @@ main() {
             sed "s/@PASSWORD@/'${CLUSTER_ADMIN_PASSWORD}'/g" | sed "s#@SERVER_URL@#${OPENSHIFT_SERVER_URL}#g" > /tmp/oc-conn.json
     else
         echo "No cluster admin password provided, using service account token instead."
-        sed "s/@TOKEN@/${K8_SA_TOKEN}/g" $DEMO_HOME/install/azure-devops/service-connection-templates/openshift-service-connection-token.json | \
+        sed "s/@TOKEN@/$(echo $K8_SA_TOKEN_ENC | base64 -d)/g" $DEMO_HOME/install/azure-devops/service-connection-templates/openshift-service-connection-token.json | \
             sed "s#@SERVER_URL@#${OPENSHIFT_SERVER_URL}#g" > /tmp/oc-conn.json
         # FIXME: Use the token of a service account instead
         # echo "WARNING: No cluster admin password provided, using token based service connection instead which could lead to authentication issues when token expires"
@@ -199,7 +199,7 @@ main() {
     # registry connection
     echo "Creating Registry Connection"
     sed "s#@REGISTRY_URL@#${CONTAINER_REGISTRY_URL}#g" $DEMO_HOME/install/azure-devops/service-connection-templates/registry-service-connection.json | \
-        sed "s/@USER@/${CONTAINER_REGISTRY_USERNAME}/g" | sed "s/@SERVER_URL@/${CONTAINER_REGISTRY_PASSWORD}/" > /tmp/registry-conn.json
+        sed "s/@USER@/${CONTAINER_REGISTRY_USERNAME}/g" | sed "s/@PASSWORD@/${CONTAINER_REGISTRY_PASSWORD}/" > /tmp/registry-conn.json
     REGISTRY_CONNECTION_ID=$(trim $(az devops service-endpoint create --service-endpoint-configuration /tmp/registry-conn.json --query id))
     az devops service-endpoint update --id $REGISTRY_CONNECTION_ID --enable-for-all true > /dev/null
     
@@ -277,17 +277,23 @@ main() {
     # Update environment templates
     ${SCRIPT_DIR}/update-environment-templates.sh ${SA_PASSWORD}
 
-    echo "Pre-seed the user codeready namespace (${crw_user_ns}) with environment secret"
-    oc create secret generic codeready-env --from-file=.zshenv=$DEMO_HOME/secrets/.zshenv-k8 -n $crw_user_ns
+    
+    oc get secret codeready-env -n ${crw_user_ns} 2>/dev/null || {
+        echo "Pre-seed the user codeready namespace (${crw_user_ns}) with environment secret"
+        oc create secret generic codeready-env --from-file=.zshenv=$DEMO_HOME/secrets/.zshenv-k8 -n $crw_user_ns
+    
+        echo "Annotate the secret so that it is loaded by default in all codeready workspaces"
+        oc annotate secret --overwrite codeready-env "che.eclipse.org/automount-workspace-secret"="true" "che.eclipse.org/mount-path"="{prod-home}" \
+            "che.eclipse.org/mount-as"="file" -n $crw_user_ns
+    }
 
-    # annotate the secret so that it is loaded by default in all codeready workspaces
-    oc annotate secret --overwrite codeready-env "che.eclipse.org/automount-workspace-secret"="true" "che.eclipse.org/mount-path"="{prod-home}" \
-        "che.eclipse.org/mount-as"="file" -n $crw_user_ns
-
-    echo "Create secret for deployment config in dev environment"
-    oc create secret generic eshop-dev --from-env-file=$DEMO_HOME/secrets/.zshenv-k8 -n $dev_prj
-
-#    kubectl get serviceAccounts <service-account-name> -n <namespace> -o=jsonpath={.secrets[*].name}
+    PROJECTS=( $dev_prj $stage_prj )
+    for PRJ in ${PROJECTS[@]}; do    
+        oc get secret eshop-dev -n $PRJ 2>/dev/null || {
+            echo "Create secret eshop-dev for deployment config in ${PRJ}"
+            oc create secret generic eshop-dev --from-env-file=$DEMO_HOME/secrets/.zshenv-k8 -n $PRJ
+        }
+    done
 
     echo "Demo installation completed successfully!"
 }
