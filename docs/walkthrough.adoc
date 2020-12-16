@@ -106,8 +106,35 @@ image:pipeline-badge.png[]
 
 == Edit in CRW
 
+. Show the explorer
+** be sure to open the `eShopWeb > src > Web > Controllers` folder to show the dotnet core structure
+** Can also show the `Web.csproj` or `Startup.cs`
++
+image:crw-explorer.png[]
++
+. Show the tools drawer
++
+image:crw-tools.png[]
++
+. Whilst the tools drawer is open, click `Seed Cache` to restore packages from a cache on the container
+** This is a way of responding to the `there are some dependencies` popup
+. When the `Seed Cache` task is complete open a terminal
+. Show that you can log into OpenShift from the terminal
++
+----
+oc login $(oc whoami --show-server)
+----
++
+. Run some commands, but especially this one to prove that the environment has been customized to include the az cli
++
+----
+az pipelines list --org https://dev.azure.com/mhildenb -p fmg-project
+----
++
 . Use kbd:[CMD + p] to open `_LoginPartial.cshtml` quickly
-. Search for `Login` text and update with something
+. Search for `Login` text and update with `Login HERE`
+. Use kdb:[CMD + p] to open `azure-pipelines.yml` quickly
+. Show that one of the steps is `oc-command-test.sh`
 . Use kbd:[CMD + p] to open `oc-command-test.sh` quickly
 . Add 'oc get pods'
 . In the terminal run
