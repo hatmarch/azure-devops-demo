@@ -20,6 +20,7 @@ $0: Azure DevOps Demo --
   Usage: ${0##*/} [ OPTIONS ]
   
     -i         [optional] Install prerequisites
+    -s         [optional] Skip Azure DevOps project creation
     -P <TEXT>  [optional] Project prefix to use.  Defaults to "az-demo"
     -q <TEXT>  The password to use for the sa user of the database
     -o <TEXT>  The URL of the Azure organization (for use with az cli)
@@ -44,9 +45,10 @@ get_and_validate_options() {
 
   
   # parse options
-  while getopts ':iP:p:q:o:a:u:w:h' option; do
+  while getopts ':iP:p:q:o:a:u:w:sh' option; do
       case "${option}" in
           i  ) prereq_flag=true;;
+          s  ) skip_flag="true";;
           P  ) P_flag=true; PROJECT_PREFIX="${OPTARG}";;
           p  ) p_flag=true; CLUSTER_ADMIN_PASSWORD="${OPTARG}";;
           a  ) a_flag=true; AZURE_PROJECT="${OPTARG}";;
@@ -92,48 +94,7 @@ get_and_validate_options() {
   fi
 }
 
-main() {
-    # import common functions
-    . $SCRIPT_DIR/common-func.sh
-
-    trap 'error' ERR
-    trap 'cleanup' EXIT SIGTERM
-    trap 'interrupt' SIGINT
-
-    get_and_validate_options "$@"
-
-    # Install pre-reqs before tekton
-    if [[ -n "${prereq_flag:-}" ]]; then
-        ${SCRIPT_DIR}/install-prereq.sh 
-    fi
-
-    # OPENSHIFT_SERVER_URL=$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}')
-    OPENSHIFT_SERVER_URL=$(oc whoami --show-server)
-    echo "Current OpenShift server URL is: ${OPENSHIFT_SERVER_URL}"
-
-    #    
-    # create the dev project
-    #
-    echo "Creating projects"
-    dev_prj="${PROJECT_PREFIX}-dev"
-    oc get ns $dev_prj 2>/dev/null  || { 
-        oc new-project $dev_prj
-    }
-    
-    stage_prj="${PROJECT_PREFIX}-stage"
-    oc get ns $stage_prj 2>/dev/null || {
-        oc new-project $stage_prj
-    }
-
-    sup_prj="${PROJECT_PREFIX}-support"
-    oc get ns $sup_prj 2>/dev/null || {
-        oc new-project $sup_prj
-    }
-
-    echo "Granting default service account of $sup_prj edit access to both $dev_prj and $stage_prj"
-    oc adm policy add-role-to-user edit system:serviceaccount:$sup_prj:default -n $stage_prj
-    oc adm policy add-role-to-user edit system:serviceaccount:$sup_prj:default -n $dev_prj  
-
+create-devops-project() {
     AZURE_PROJECT=$(trim $AZURE_PROJECT)
     echo "AZURE_PROJECT is $AZURE_PROJECT"
 
@@ -208,6 +169,56 @@ main() {
     az pipelines variable create --pipeline-name ${AZURE_PIPELINE_NAME} --name openshift_service_connection_id --value ${OPENSHIFT_CONNECTION_ID} > /dev/null
     az pipelines variable create --pipeline-name ${AZURE_PIPELINE_NAME} --name k8_manifest_service_connection_id --value ${K8_MANIFEST_CONNECTION_ID} > /dev/null
     az pipelines variable create --pipeline-name ${AZURE_PIPELINE_NAME} --name container_registry_service_connection_id --value ${REGISTRY_CONNECTION_ID} > /dev/null
+
+}
+
+main() {
+    # import common functions
+    . $SCRIPT_DIR/common-func.sh
+
+    trap 'error' ERR
+    trap 'cleanup' EXIT SIGTERM
+    trap 'interrupt' SIGINT
+
+    get_and_validate_options "$@"
+
+    # Install pre-reqs before tekton
+    if [[ -n "${prereq_flag:-}" ]]; then
+        ${SCRIPT_DIR}/install-prereq.sh 
+    fi
+
+    # OPENSHIFT_SERVER_URL=$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}')
+    OPENSHIFT_SERVER_URL=$(oc whoami --show-server)
+    echo "Current OpenShift server URL is: ${OPENSHIFT_SERVER_URL}"
+
+    #    
+    # create the dev project
+    #
+    echo "Creating projects"
+    dev_prj="${PROJECT_PREFIX}-dev"
+    oc get ns $dev_prj 2>/dev/null  || { 
+        oc new-project $dev_prj
+    }
+    
+    stage_prj="${PROJECT_PREFIX}-stage"
+    oc get ns $stage_prj 2>/dev/null || {
+        oc new-project $stage_prj
+    }
+
+    sup_prj="${PROJECT_PREFIX}-support"
+    oc get ns $sup_prj 2>/dev/null || {
+        oc new-project $sup_prj
+    }
+
+    echo "Granting default service account of $sup_prj edit access to both $dev_prj and $stage_prj"
+    oc adm policy add-role-to-user edit system:serviceaccount:$sup_prj:default -n $stage_prj
+    oc adm policy add-role-to-user edit system:serviceaccount:$sup_prj:default -n $dev_prj  
+
+    if [[ -z "${skip_flag:-}" ]]; then
+        create-devops-project
+    else
+        echo "Skipping AzureDevOps project creation"
+    fi
 
     #
     # Start setting up the cluster
