@@ -10,14 +10,14 @@ declare AZURE_ORG=""
 
 display_usage() {
 cat << EOF
-$0: k8 for Window Devs Demo Uninstall --
+$0: Azure DevOps Demo Uninstall --
 
   Usage: ${0##*/} [ OPTIONS ]
   
     -f         [optional] Full uninstall, removing pre-requisites
     -P <TEXT>  [optional] Project prefix to use.  Defaults to az-demo
     -s <TEXT>  [optional] The name of the support project.  Defaults to az-demo-support
-    -o <TEXT>  The URL of the Azure organization (for use with az cli)
+    -o <TEXT>  [optional] The URL of the Azure organization (for use with az cli).  If not provided, the azure project will not be deleted
     -a <TEXT>  [optional] The Azure project in question.  Default to fmg-project
 EOF
 }
@@ -35,7 +35,7 @@ get_and_validate_options() {
 
   
   # parse options
-  while getopts ':s:P:f:a:oh' option; do
+  while getopts ':s:P:f:a:o:h' option; do
       case "${option}" in
           s  ) sup_flag=true; sup_prj="${OPTARG}";;
           P  ) P_flag=true; PROJECT_PREFIX="${OPTARG}";;
@@ -60,12 +60,6 @@ get_and_validate_options() {
       display_usage >&2
       exit 1
   fi
-
-  if [[ -z "${AZURE_ORG}" ]]; then
-      printf '%s\n\n' 'ERROR - Need to specify the URL of an Azure organization' >&2
-      display_usage >&2
-      exit 1
-  fi
 }
 
 main() {
@@ -78,13 +72,17 @@ main() {
 
     get_and_validate_options "$@"
 
-    az devops project delete --id ${${$(az devops project show -p ${AZURE_PROJECT} --query id)%\"}#\"} --organization ${AZURE_ORG} --yes
+    if [[ -n "${AZURE_ORG}" ]]; then
+        echo "Deleting azure project ${AZURE_PROJECT} in org ${AZURE_ORG}"
+        az devops project delete --id $(trim $(az devops project show -p ${AZURE_PROJECT} --query id)) --organization ${AZURE_ORG} --yes > /dev/null || true
+    fi
 
     dev_prj="${PROJECT_PREFIX}-dev"
     stage_prj="${PROJECT_PREFIX}-stage"
-    sup_prj="${PROJECT_PREFIX}-sup"
+    sup_prj="${PROJECT_PREFIX}-support"
 
     if [[ -n "${full_flag:-""}" ]]; then
+        echo "Deleting operators"
         remove-operator "openshift-pipelines-operator-rh" || true
 
         remove-operator "codeready-workspaces" || true
