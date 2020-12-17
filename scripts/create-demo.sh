@@ -21,6 +21,7 @@ $0: Azure DevOps Demo --
   
     -i         [optional] Install prerequisites
     -s         [optional] Skip Azure DevOps project creation
+    -d         [optional] Seed the staging database as part of the setup (normally this is done by the pipeline).  Default is not to
     -P <TEXT>  [optional] Project prefix to use.  Defaults to "az-demo"
     -q <TEXT>  The password to use for the sa user of the database
     -o <TEXT>  The URL of the Azure organization (for use with az cli)
@@ -45,10 +46,11 @@ get_and_validate_options() {
 
   
   # parse options
-  while getopts ':iP:p:q:o:a:u:w:sh' option; do
+  while getopts ':iP:p:q:o:a:u:w:snh' option; do
       case "${option}" in
           i  ) prereq_flag=true;;
           s  ) skip_flag="true";;
+          d  ) seed_staging_db="true";;
           P  ) P_flag=true; PROJECT_PREFIX="${OPTARG}";;
           p  ) p_flag=true; CLUSTER_ADMIN_PASSWORD="${OPTARG}";;
           a  ) a_flag=true; AZURE_PROJECT="${OPTARG}";;
@@ -299,8 +301,12 @@ main() {
         echo "done!"
         oc rollout status deploy/hplus-db -n $PRJ
 
-        echo "Initializing database in project $PRJ"
-        ${SCRIPT_DIR}/initialize-database.sh -p $PRJ
+        if [[ $PRJ == $stage_prj && -z "${seed_staging_db:-}" ]]; then
+            echo "Not seeding database in $PRJ"
+        else
+            echo "Initializing database in project $PRJ"
+            ${SCRIPT_DIR}/initialize-database.sh -p $PRJ
+        fi
 
         oc get secret eshop-dev -n $PRJ 2>/dev/null || {
             echo "Create secret eshop-dev for deployment config in ${PRJ}"
