@@ -54,3 +54,6 @@ RUN az extension add -n azure-devops
 RUN chmod g+w -R /home/jboss
 
 USER jboss
+
+# make sure sqlcmd is in our path
+ENV PATH="$PATH:/opt/mssql-tools/bin"
