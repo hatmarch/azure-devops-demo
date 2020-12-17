@@ -133,10 +133,43 @@ az pipelines list --org https://dev.azure.com/mhildenb -p fmg-project
 +
 . Use kbd:[CMD + p] to open `_LoginPartial.cshtml` quickly
 . Search for `Login` text and update with `Login HERE`
-. Use kdb:[CMD + p] to open `azure-pipelines.yml` quickly
-. Show that one of the steps is `oc-command-test.sh`
-. Use kbd:[CMD + p] to open `oc-command-test.sh` quickly
-. Add 'oc get pods'
++
+image:crw-login.png[]
++
+. Use kbd:[CMD + p] to open `azure-pipelines.yml` quickly
+. Show that one of the steps is `oc-db-seed.sh`
+. Use kbd:[CMD + p] to open `oc-db-seed.sh` quickly
+. Switch to the topology view of the staging namespace and show that there is only a database
+. Back in CRW, run the following command in the terminal to show that the database still needs to be seeded
++
+----
+sqlcmd -S tcp:hplus-db.az-demo-stage.svc.cluster.local -q 'select name from sys.databases' -U sa -P 'yourStrong(!)Password'
+----
++
+. In `oc-db-seed.sh` uncomment the following lines to show usage of oc
++
+----
+# FIXME: Uncomment to access the oc command
+# oc project $PROJECT
+# oc port-forward svc/${DATABASE_SVC} 1433:1433 &
+----
++
+. Open the tools menu and select `build`
+. When the build is complete select `run`
+. Click okay on all the popups.  Eventually preview will be opened
+. After popups are gone, keep hitting refresh on the preview until the site appears.  Then use the highlighted open in new window button to show a non-squished version of the site
++
+image:crw-preview.png[]
++
+. Use kbd:[CMD + p] to open the `launchProperties.json` file quickly and show the `CRW` profile
+. Use kbd:[CMD + p] to show the `build` action and that it's using the CRW profile
+. Log into the website ([red]#preferrably from a separate tab#)
+. Show that the cart has what was purchased previously
+
+== Show Azure DevOps
+
+. From CRW, go to the git option
+. Show differences 
 . In the terminal run
 +
 ----
@@ -152,11 +185,7 @@ image:azure-devops-creds.png[]
 +
 . Copy the password
 . Go back to the CRW window and paste in for password
-. Push should be successful
-
-== Show Azure DevOps
-
-. Go to Pipelines
+. Push should be successful, switch back to the Azure Pipelines tab
 . Show that a pipeline has been triggered.  Click on the one that is running
 +
 image:pipeline-runs.png[]
