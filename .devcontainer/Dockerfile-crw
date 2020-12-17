@@ -53,6 +53,8 @@ RUN az extension add -n azure-devops
 
 RUN chmod g+w -R /home/jboss
 
+RUN chown -R jboss /home/jboss
+
 USER jboss
 
 # make sure sqlcmd is in our path
