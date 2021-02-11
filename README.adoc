@@ -4,6 +4,12 @@
 :toc:
 :toclevels: 4
 
+Here are the instructions for setting up your environment to run a demo of how AzureDevOps can be made to integrate with OpenShift (Kubernetes).  
+
+image:demo-overview.png[]
+
+Once you have followed these steps, you can proceed to the link:docs/walkthrough.adoc[walkthrough steps].
+
 == Cloning This Repo ==
 
 This repo has submodules.  When cloning, be sure to use the following command to also pull down any linked submodules:
