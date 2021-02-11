@@ -1,4 +1,4 @@
-= Azure DevOps demo: Setup =
+= Azure DevOps Demo: Setup =
 :experimental:
 :imagesdir: docs/images
 :toc:
