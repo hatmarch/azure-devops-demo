@@ -35,7 +35,7 @@ get_and_validate_options() {
 
   
   # parse options
-  while getopts ':s:P:f:a:o:h' option; do
+  while getopts ':s:P:fa:o:h' option; do
       case "${option}" in
           s  ) sup_flag=true; sup_prj="${OPTARG}";;
           P  ) P_flag=true; PROJECT_PREFIX="${OPTARG}";;
