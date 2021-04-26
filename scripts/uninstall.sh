@@ -74,7 +74,7 @@ main() {
 
     if [[ -n "${AZURE_ORG}" ]]; then
         echo "Deleting azure project ${AZURE_PROJECT} in org ${AZURE_ORG}"
-        az devops project delete --id $(trim $(az devops project show -p ${AZURE_PROJECT} --query id)) --organization ${AZURE_ORG} --yes > /dev/null || true
+        az devops project delete --id $(trim $(az devops project show -p ${AZURE_PROJECT} --organization "${AZURE_ORG}" --query id)) --organization "${AZURE_ORG}" --yes > /dev/null || true
     fi
 
     dev_prj="${PROJECT_PREFIX}-dev"
@@ -89,7 +89,7 @@ main() {
     fi
 
     # delete the checluster before deleting the codeready project
-    oc delete checluster --all -n codeready
+    oc delete checluster --all -n codeready || true
 
     # delete the codeready project as well as any projects created for a given user
     oc get project -o name | grep codeready | xargs oc delete || true
