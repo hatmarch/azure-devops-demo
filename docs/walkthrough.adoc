@@ -20,14 +20,14 @@ The following sections review the different windows and potential setup necessar
 . Run this docker command from that directory (so that all the remaining commands will be run from inside a container will all the necessary tools installed)
 +
 ----
-docker run -u root -it -v ~/.kube:/opt/app-root/.kube -v ~/.azure:/opt/app-root/.azure -v ~/.ssh:/opt/app-root/.ssh -v $(pwd):/opt/app-root/src quay.io/mhildenb/az-demo-shell:latest /bin/zsh
+docker run -u root --rm -it -v ~/.kube:/opt/app-root/.kube -v ~/.azure:/opt/app-root/.azure -v ~/.ssh:/opt/app-root/.ssh -v $(pwd):/opt/app-root/src quay.io/mhildenb/az-demo-shell:latest /bin/zsh
 ----
 +
 . Open a second shell offscreen, the `hidden shell` and go to the root of the `azure-devops-demo` directory on your local machine
 . Run the same docker command from before
 +
 ----
-docker run -u root -it -v ~/.kube:/opt/app-root/.kube -v ~/.azure:/opt/app-root/.azure -v ~/.ssh:/opt/app-root/.ssh -v $(pwd):/opt/app-root/src quay.io/mhildenb/az-demo-shell:latest /bin/zsh
+docker run -u root --rm -it -v ~/.kube:/opt/app-root/.kube -v ~/.azure:/opt/app-root/.azure -v ~/.ssh:/opt/app-root/.ssh -v $(pwd):/opt/app-root/src quay.io/mhildenb/az-demo-shell:latest /bin/zsh
 ----
 
 === Windows
