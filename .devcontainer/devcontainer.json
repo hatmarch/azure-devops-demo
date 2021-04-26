@@ -1,7 +1,7 @@
 {
 	"name": "Azure DevOps Demo",
 	"build": {
-        "dockerfile": "Dockerfile",
+        "dockerfile": "Dockerfile${env:DEVCONTAINER_SUFFIX}",
         "args": {
         "USERNAME": "default",
         "INSTALL_NODE": "false",
@@ -12,8 +12,8 @@
 
 		// Comment out to connect as root user. See https://aka.ms/vscode-remote/containers/non-root.
 	// make sure this is the same as USERNAME above
-	"remoteUser": "default",
-	"dockerFile": "Dockerfile",
+	//"remoteUser": "default",
+	//"dockerFile": "Dockerfile",
 	"runArgs": [
 		//"-v", "${env:HOME}/.aws:/opt/app-root/.aws",
 		"-v", "${env:HOME}/.azure:/opt/app-root/.azure",

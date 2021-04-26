@@ -4,7 +4,7 @@
 :toc:
 :toclevels: 4
 
-Here are the instructions for setting up your environment to run a demo of how AzureDevOps can be made to integrate with OpenShift (Kubernetes).  
+Here are the instructions for setting up your environment to run a demo of how AzureDevOps can be made to integrate with OpenShift (Kubernetes).
 
 image:demo-overview.png[]
 
@@ -16,6 +16,16 @@ This repo has submodules.  When cloning, be sure to use the following command to
 ----
 git clone --recurse-submodules https://github.com/hatmarch/azure-devops-demo
 ----
+
+[NOTE]
+.Important for podman users
+====
+If you are using (rootless) podman containers with a non-root user on the host, you'll need to set the following environment variable on the host
+
+----
+export DEVCONTAINER_SUFFIX="-podman"
+----
+====
 
 === Setup Prerequisites ===
 
