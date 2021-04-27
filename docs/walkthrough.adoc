@@ -55,10 +55,6 @@ image:create-from-git-2.png[]
 +
 image:create-from-git-3.png[]
 +
-. *Build Configuration:* Click on Builds link at bottom to review Build Configuration options and uncheck all the S2I options
-+
-image:create-from-git-4.png[]
-+
 . Click Deployments and add all the following from the `eshop-dev` secret (and as shown):
 +
 image:create-from-git-5.png[]
@@ -69,25 +65,15 @@ image:create-from-git-5.png[]
 ----
 oc annotate deploy/eshop --overwrite "app.openshift.io/vcs-uri"="https://github.com/hatmarch/eShopOnWeb.git" -n $dev_prj
 ----
-. Notice that the deployment is pending.  Click on the deployment and show the resource screen
+. Notice that the deployment is pending.  Also notice that the build badge is set in the "building" state.  kbd:[CMD] + click on that badge to navigate to the pipeline run in a new tab.
 +
 image:initial-dev-deploy.png[]
 +
-. Click on the Pipeline under `Pipeline Runs`
+. The pipeline details screen appears with a build already in progress.  
 +
-image:pipeline-run-deploy-button.png[]
+image::initial-pipeline-run.png[]
 +
-. From the Pipeline details screen, open the `Actions` dropdown in the upper right and choose `Start`
-+
-image:pipeline-screen.png[]
-+
-. The pipeline details screen appears.  All the defaults are fine except:
-** `MINOR_VERSION`: This refers to the minor version of the dotnet sdk.  Choose `1`
-** `Workspace`: A PVC has been created in the dev project for this.  Choose it
-+
-image:start-pipeline-details.png[]
-+
-. _Make so a window with the Topology view is shown so that the new deployment can be seen when the build is completed_
+. _Now arrange the pipeline tab in a separate window so that the Topology view is shown as well.  That way the new deployment can be shown the instant the build is completed_
 . Follow the logs from the *shell* as these are more stable than watching in real time in the UI.  To do so enter the following command:
 +
 ----
