@@ -108,10 +108,10 @@ image:crw-tools.png[]
 . Show that you can log into OpenShift from the terminal
 +
 ----
-oc login $(oc whoami --show-server)
+oc login $(oc whoami --show-server) -u opentlc-mgr
 ----
 +
-. Run some commands, but especially this one to prove that the environment has been customized to include the az cli
+. Run some commands, but especially this one to prove that the environment has been customized to include the az clifootnote:[You may need to log into azure first using `az login` and following the instructions posted]
 +
 ----
 az pipelines list --org https://dev.azure.com/mhildenb -p fmg-project
