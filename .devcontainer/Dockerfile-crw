@@ -51,9 +51,8 @@ RUN subscription-manager unregister
 # enable az pipelines support
 RUN az extension add -n azure-devops 
 
-RUN chmod g+w -R /home/jboss
-
-RUN chown -R jboss /home/jboss
+# allow group write on everything in the home directory and make sure group is root (to support anonymous users)
+RUN chown -R jboss:0 /home/jboss && chmod g+rw -R /home/jboss
 
 USER jboss
 
