@@ -147,21 +147,38 @@ sqlcmd -S tcp:hplus-db.az-demo-stage.svc.cluster.local -q 'select name from sys.
 +
 image:crw-preview.png[]
 +
-. Use kbd:[CMD + p] to open the `launchProperties.json` file quickly and show the `CRW` profile
-. Use kbd:[CMD + p] to show the `build` action and that it's using the CRW profile
+. Use kbd:[CMD + p] to open the `launchSettings.json` (in the `eShopWeb/src/Web/Properties/`) file quickly and show the `CRW` profile
+. Use kbd:[CMD + p] to open the `devfile.yaml` in the project directory and inspect the `build` action (which also features in the menu to the right).  
+** Point out that this invokes the `CRW` launch setting that we just showed
++
+image::devfile-build.png[]
++
 . Log into the website ([red]#preferrably from a separate tab#)
-. Show that the cart has what was purchased previously
+. Show that the cart contains what was purchased previously when we last connected to the dev database
++
+image::dev-shopping-cart.png[]
++
+. To prove that the build is really running from CRW, stop the running build and then switch back to the browser tab and reload.  You should get an error like this one (indicating that there is no active deployment):
++
+image::no-active-deployment.png[]
+
 
 == Show Azure DevOps
 
-. From CRW, go to the git option
+. From CRW, go to the git option.  You should see the 2 files that have been changed
 . Show differences 
-. In the terminal run
+. Enter a commit message like `Made changes for demo`.  Click commit
 +
-----
-git commit -m"Made changes for demo"
-git push origin
-----
+image::crw-git-ui.png[]
++
+. Next we're going to push to the azure-devops repo which will in turn trigger our Azure DevOps pipeline.  
+** to see where we're committing, you can use kbd:[CMD + p] to quickly open the `devfile.yaml`
++
+image::devfile-git-repo.png[]
++
+. To push, click the `...` menu to the right and select `Push`
++
+image::crw-git-push.png[]
 +
 . When prompted for a password, switch to Azure DevOps
 . Navigate to the `AZURE_PROJECT` project
