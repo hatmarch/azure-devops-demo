@@ -81,12 +81,21 @@ main() {
     stage_prj="${PROJECT_PREFIX}-stage"
     sup_prj="${PROJECT_PREFIX}-support"
 
+    # Remove tekton operator instances (need to do with before CRD removal)
+    oc delete tektonpipeline --all -n openshift-operators || true
+    oc delete TektonTrigger --all -n openshift-operators || true
+    oc delete TektonConfig --all -n openshift-operators || true
+    oc delete TektonAddon --all -n openshift-operators || true
+
     if [[ -n "${full_flag:-""}" ]]; then
         echo "Deleting operators"
         remove-operator "openshift-pipelines-operator-rh" || true
 
         remove-operator "codeready-workspaces" || true
     fi
+
+    # delete the openshift-pipelines namespace (created by the operator)
+    oc delete project openshift-pipelines || true
 
     # delete the checluster before deleting the codeready project
     oc delete checluster --all -n codeready || true
