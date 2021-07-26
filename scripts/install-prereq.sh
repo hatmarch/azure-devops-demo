@@ -99,7 +99,7 @@ metadata:
   name: openshift-pipelines-operator-rh
   namespace: openshift-operators
 spec:
-  channel: ocp-4.6
+  channel: stable
   installPlanApproval: Automatic
   name: openshift-pipelines-operator-rh
   source: redhat-operators
@@ -107,7 +107,7 @@ spec:
 EOF
 
     # Ensure pipelines is installed
-    wait_for_crd "crd/pipelines.tekton.dev"
+    wait_for_crd "crd/tektonpipelines.operator.tekton.dev"
 
     echo -n "Ensuring gitea operator has installed successfully..."
     oc rollout status deploy/gitea-operator -n $giteaop_prj
